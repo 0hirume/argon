@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Alphabetical sorting of object properties in all JSON files ([#268](https://github.com/argon-rbx/argon/issues/268))
+
 ### Fixed
 
 - Crashes caused by the `Cannot destroy the root instance of a WeakDom` error ([#257](https://github.com/argon-rbx/argon/issues/257))

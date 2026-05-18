@@ -7,9 +7,10 @@ use log::LevelFilter;
 use rbx_dom_weak::types::Variant;
 use rbx_reflection::{ClassTag, ReflectionDatabase};
 use roblox_install::RobloxStudio;
+use serde::Serialize;
 use std::{env, path::PathBuf, process::Command};
 
-use crate::Properties;
+use crate::{ext::ResultExt, Properties};
 
 /// Returns the `.argon` directory
 pub fn get_argon_dir() -> Result<PathBuf> {
@@ -161,12 +162,15 @@ pub fn count_loc_from_properties(properties: &Properties) -> usize {
 	loc
 }
 
-/// Returns a custom serde_json formatter
-pub fn get_json_formatter() -> JsonFormatter<'static> {
-	JsonFormatter::new()
+/// Serializes value to a pretty-printed and sorted JSON
+pub fn serialize_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+	let formatter = JsonFormatter::new()
 		.with_array_breaks(false)
 		.with_extra_newline(true)
-		.with_max_decimals(4)
+		.with_sorted_keys(true)
+		.with_max_decimals(4);
+
+	formatter.to_vec(value).desc("Failed to serialize JSON")
 }
 
 /// Returns local or bundled reflection database

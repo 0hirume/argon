@@ -2,7 +2,6 @@ use anyhow::Result;
 use log::error;
 use rbx_dom_weak::{types::Tags, ustr, HashMapExt, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
-use serde_json::Serializer;
 use std::{
 	collections::{BTreeMap, HashMap},
 	path::{Path, PathBuf},
@@ -13,7 +12,7 @@ use crate::{
 	ext::PathExt,
 	middleware::helpers,
 	resolution::UnresolvedValue,
-	util::{self, get_json_formatter},
+	util::{self, serialize_json},
 	vfs::Vfs,
 	Properties,
 };
@@ -182,11 +181,7 @@ pub fn write_data<'a>(
 		return Ok(None);
 	}
 
-	let mut writer = Vec::new();
-	let mut serializer = Serializer::with_formatter(&mut writer, get_json_formatter());
-
-	data.serialize(&mut serializer)?;
-	vfs.write(path, &writer)?;
+	vfs.write(path, &serialize_json(&data)?)?;
 
 	Ok(Some(path))
 }
@@ -232,11 +227,7 @@ pub fn write_original_name(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<()> {
 		data
 	};
 
-	let mut writer = Vec::new();
-	let mut serializer = Serializer::with_formatter(&mut writer, get_json_formatter());
-
-	data.serialize(&mut serializer)?;
-	vfs.write(path, &writer)?;
+	vfs.write(path, &serialize_json(&data)?)?;
 
 	Ok(())
 }

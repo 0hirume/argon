@@ -2,7 +2,6 @@ use anyhow::Result;
 use colored::Colorize;
 use rbx_dom_weak::{types::Ref, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
-use serde_json::Serializer;
 use std::{
 	collections::{BTreeMap, HashMap},
 	fs, mem,
@@ -18,7 +17,7 @@ use crate::{
 	ext::{PathExt, ResultExt},
 	glob::Glob,
 	resolution::UnresolvedValue,
-	util::get_json_formatter,
+	util::serialize_json,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -129,11 +128,7 @@ impl Project {
 	}
 
 	pub fn save(&self, path: &Path) -> Result<()> {
-		let mut writer = Vec::new();
-		let mut serializer = Serializer::with_formatter(&mut writer, get_json_formatter());
-
-		self.serialize(&mut serializer)?;
-		fs::write(path, &writer)?;
+		fs::write(path, serialize_json(self)?)?;
 
 		Ok(())
 	}

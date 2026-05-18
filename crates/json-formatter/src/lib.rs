@@ -1,5 +1,6 @@
-use serde_json::ser::Formatter;
-use std::io;
+use serde::Serialize;
+use serde_json::{ser::Formatter, Serializer, Value};
+use std::{io, mem};
 
 macro_rules! tri {
 	($e:expr $(,)?) => {
@@ -19,6 +20,7 @@ pub struct JsonFormatter<'a> {
 	array_breaks: bool,
 	extra_newline: bool,
 	max_decimals: usize,
+	sorted_keys: bool,
 }
 
 impl<'a> JsonFormatter<'a> {
@@ -31,6 +33,7 @@ impl<'a> JsonFormatter<'a> {
 			array_breaks: true,
 			extra_newline: false,
 			max_decimals: 0,
+			sorted_keys: false,
 		}
 	}
 
@@ -56,6 +59,32 @@ impl<'a> JsonFormatter<'a> {
 	pub fn with_max_decimals(mut self, max_decimals: usize) -> Self {
 		self.max_decimals = max_decimals;
 		self
+	}
+
+	/// Construct a pretty printer formatter that writes object fields in alphabetical order.
+	pub fn with_sorted_keys(mut self, sorted_keys: bool) -> Self {
+		self.sorted_keys = sorted_keys;
+		self
+	}
+
+	/// Serialize `value` to a UTF-8 byte vector using this formatter's settings.
+	pub fn to_vec<T>(&self, value: &T) -> serde_json::Result<Vec<u8>>
+	where
+		T: ?Sized + Serialize,
+	{
+		let mut writer = Vec::new();
+		let mut serializer = Serializer::with_formatter(&mut writer, self.clone());
+
+		if self.sorted_keys {
+			let mut value = serde_json::to_value(value)?;
+			sort_object_keys(&mut value);
+
+			value.serialize(&mut serializer)?;
+		} else {
+			value.serialize(&mut serializer)?;
+		}
+
+		Ok(writer)
 	}
 }
 
@@ -214,4 +243,32 @@ where
 	}
 
 	Ok(())
+}
+
+fn sort_object_keys(value: &mut Value) {
+	match value {
+		Value::Object(map) => {
+			let mut entries: Vec<_> = mem::take(map).into_iter().collect();
+
+			for (_, value) in &mut entries {
+				sort_object_keys(value);
+			}
+
+			entries.sort_by(|(a, _), (b, _)| {
+				a.to_lowercase()
+					.cmp(&b.to_lowercase())
+					.then_with(|| a.cmp(b))
+			});
+
+			for (key, value) in entries {
+				map.insert(key, value);
+			}
+		}
+		Value::Array(values) => {
+			for value in values {
+				sort_object_keys(value);
+			}
+		}
+		_ => {}
+	}
 }
