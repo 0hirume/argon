@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.29] - 2026-05-18
+
 ### Added
 
 - Alphabetical sorting of object properties in all JSON files ([#268](https://github.com/argon-rbx/argon/issues/268))
@@ -441,7 +443,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.28...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.29...HEAD
+[2.0.29]: https://github.com/argon-rbx/argon/compare/2.0.28...2.0.29
 [2.0.28]: https://github.com/argon-rbx/argon/compare/2.0.27...2.0.28
 [2.0.27]: https://github.com/argon-rbx/argon/compare/2.0.26...2.0.27
 [2.0.26]: https://github.com/argon-rbx/argon/compare/2.0.25...2.0.26
