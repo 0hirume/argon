@@ -115,6 +115,7 @@ impl Snapshot {
 		}
 
 		self.extend_properties(data.properties);
+		self.meta.pending_refs.extend(data.ref_properties);
 		self.meta.source.add_data(&data.path);
 	}
 
