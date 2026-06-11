@@ -53,10 +53,27 @@ impl Tree {
 		id
 	}
 
-	pub fn insert_instance_recursive(&mut self, snapshot: Snapshot, parent: Ref) -> Ref {
+	pub fn insert_instance_recursive(&mut self, mut snapshot: Snapshot, parent: Ref) -> Ref {
+		let mut ref_map = HashMap::new();
+
+		let id = self.insert_instance_recursive_inner(&mut snapshot, parent, &mut ref_map);
+
+		if !ref_map.is_empty() {
+			self.remap_inserted_refs(&snapshot, &ref_map);
+		}
+
+		id
+	}
+
+	fn insert_instance_recursive_inner(
+		&mut self,
+		snapshot: &mut Snapshot,
+		parent: Ref,
+		ref_map: &mut HashMap<Ref, Ref>,
+	) -> Ref {
 		let mut builder = InstanceBuilder::new(snapshot.class)
 			.with_name(snapshot.meta.original_name.as_ref().unwrap_or(&snapshot.name))
-			.with_properties(snapshot.properties);
+			.with_properties(snapshot.properties.clone());
 
 		if snapshot.id != Ref::none() {
 			builder = builder.with_referent(snapshot.id);
@@ -64,13 +81,34 @@ impl Tree {
 
 		let id = self.dom.insert(parent, builder);
 
-		self.insert_meta(id, snapshot.meta);
+		self.insert_meta(id, snapshot.meta.clone());
+		snapshot.set_id(id);
 
-		for child in snapshot.children {
-			self.insert_instance_recursive(child, id);
+		if snapshot.ref_id.is_some() {
+			ref_map.insert(snapshot.ref_id, id);
+		}
+
+		for child in snapshot.children.iter_mut() {
+			self.insert_instance_recursive_inner(child, id, ref_map);
 		}
 
 		id
+	}
+
+	fn remap_inserted_refs(&mut self, snapshot: &Snapshot, ref_map: &HashMap<Ref, Ref>) {
+		if let Some(instance) = self.dom.get_by_ref_mut(snapshot.id) {
+			for value in instance.properties.values_mut() {
+				if let Variant::Ref(reference) = value {
+					if let Some(&mapped) = ref_map.get(reference) {
+						*value = Variant::Ref(mapped);
+					}
+				}
+			}
+		}
+
+		for child in &snapshot.children {
+			self.remap_inserted_refs(child, ref_map);
+		}
 	}
 
 	pub fn insert_instance_with_ref(&mut self, snapshot: Snapshot, parent: Ref) {

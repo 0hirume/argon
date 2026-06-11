@@ -56,13 +56,15 @@ pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 			meta.set_mesh_source(super::save_mesh(&instance.properties));
 		}
 
-		Snapshot::new()
-			.with_id(ref_map[&id])
+		let mut snapshot = Snapshot::new()
 			.with_meta(meta)
 			.with_name(&instance.name)
 			.with_class(&instance.class)
 			.with_properties(instance.properties)
-			.with_children(children)
+			.with_children(children);
+
+		snapshot.ref_id = ref_map[&id];
+		snapshot
 	}
 
 	build(id, &mut instances, &ref_map)
@@ -100,14 +102,15 @@ mod tests {
 
 		assert_eq!(
 			snapshot.properties.get(&Ustr::from("PrimaryPart")),
-			Some(&Variant::Ref(hitbox_snapshot.id))
+			Some(&Variant::Ref(hitbox_snapshot.ref_id))
 		);
 		assert_eq!(
 			weld_snapshot.properties.get(&Ustr::from("Part0")),
-			Some(&Variant::Ref(hitbox_snapshot.id))
+			Some(&Variant::Ref(hitbox_snapshot.ref_id))
 		);
 
-		assert_ne!(hitbox_snapshot.id, hitbox_ref);
-		assert_ne!(snapshot.id, model_ref);
+		assert_ne!(hitbox_snapshot.ref_id, hitbox_ref);
+		assert_ne!(snapshot.ref_id, model_ref);
+		assert_eq!(snapshot.id, Ref::none());
 	}
 }
